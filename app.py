@@ -1,11 +1,17 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify, render_template
 import requests
 from urllib.parse import urlparse
 from urllib.parse import parse_qs
 import os
+from flask_cors import CORS, cross_origin
+from utils import column_to_letter
+
+from dotenv import load_dotenv
 
 import gspread
 import pymongo
+
+load_dotenv()
 
 gc = gspread.service_account(filename=os.getenv("GOOGLE_CREDENTIALS"))
 
@@ -13,15 +19,17 @@ git_client_id = os.getenv("GITHUB_CLIENT_ID")
 git_client_secret = os.getenv("GITHUB_CLIENT_SECRET")
 
 mongo_client = pymongo.MongoClient(os.getenv("MONGODB_CONNECTION_STRING"))
-db = mongo_client.G5_MongoDB_Charts
+db = mongo_client[os.getenv("MONGODB_DB_NAME")]
 
 
 app = Flask(__name__)
+CORS(app, support_credentials=True)
 
 
-@app.route("/api", methods=["POST"])
+@app.route("/api", methods=["POST", "OPTIONS"])
+@cross_origin(supports_credentials=True)
 def api():
-    json = request.json()
+    json = request.json
 
     attribs = [
         "studentName",
@@ -31,17 +39,21 @@ def api():
         "questionUrl",
         "platform",
     ]
-
+    print(json)
     for atr in attribs:
         if atr not in json:
             return "", 400
 
     # Push to mongodb
     student_collection = db.People
+    # question_collection = db.QuestionTest
     question_collection = db.Question
 
     student = student_collection.find_one({"Name": json["studentName"]})
     question = question_collection.find_one({"URL": json["questionUrl"]})
+
+    if not student or not question:
+        return "", 400
 
     sh = gc.open("Copy of A2SV - G5 Main Sheet")
 
@@ -56,13 +68,36 @@ def api():
         "Time Spent": json["timeTaken"],
     }
 
-    print(interaction)
     # db.Interactions.insert_one(interaction)
     db.InteractionTest.insert_one(interaction)
 
-    ws = sh.worksheet()
+    # Attach to google sheet
+    ws = sh.worksheet(question["Sheet"])
 
-    return "OK", 200
+    studentNames = ws.col_values(1)
+
+    studentRow = None
+    for row, name in enumerate(studentNames):
+        if name == student["Name"]:
+            studentRow = row + 1
+            break
+    else:
+        return "", 400
+
+    questionColumn = column_to_letter(question["Column"])
+    timespentColumn = column_to_letter(question["Column"] + 1)
+
+    ws.update_acell(
+        f"{questionColumn}{studentRow}",
+        f'=HYPERLINK("{json["gitUrl"]}", "{json["attempts"]}")',
+    )
+    ws.format(f"{questionColumn}{studentRow}", {"horizontalAlignment": "RIGHT"})
+    ws.update_acell(
+        f"{timespentColumn}{studentRow}",
+        json["timeTaken"],
+    )
+    ws.format(f"{timespentColumn}{studentRow}", {"horizontalAlignment": "RIGHT"})
+    return jsonify({"status": "OK"})
 
 
 @app.route("/authenticate")
@@ -82,8 +117,27 @@ def authenticate():
         if response.status_code == 200:
             parsed_response = urlparse(f"?{response.text}")
             access_token = parse_qs(parsed_response.query)["access_token"][0].strip()
-            return f"<input type='hidden' value='{access_token}' id='access_token'> {access_token}"
+            return render_template(
+                "index.html.jinja",
+                access_token=access_token,
+                success=True,
+                message="Successfully authenticated!",
+            )
         else:
-            return ""
+            return render_template(
+                "index.html",
+                access_token=access_token,
+                success=False,
+                message="Authentication failed!",
+            )
     except:
-        return ""
+        return render_template(
+            "index.html",
+            access_token=access_token,
+            success=False,
+            message="Authentication failed!",
+        )
+
+
+if __name__ == "__main__":
+    app.run(debug=True)
