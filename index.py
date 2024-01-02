@@ -27,7 +27,7 @@ scopes = [
 ]
 
 credentials = Credentials.from_service_account_info(
-    json.load(os.getenv("GOOGLE_CREDENTIALS")), scopes=scopes
+    json.loads(os.getenv("GOOGLE_CREDENTIALS")), scopes=scopes
 )
 
 gc = gspread.authorize(credentials)
