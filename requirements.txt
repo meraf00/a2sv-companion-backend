@@ -1,4 +1,3 @@
-flask-corsblinker
 cachetools
 certifi
 charset-normalizer
