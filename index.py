@@ -13,6 +13,8 @@ import pymongo
 
 load_dotenv()
 
+MAIN_SHEETNAME = os.getenv("MAIN_SHEET_NAME")
+
 gc = gspread.service_account(filename=os.getenv("GOOGLE_CREDENTIALS"))
 
 git_client_id = os.getenv("GITHUB_CLIENT_ID")
@@ -74,7 +76,7 @@ def api():
     if not student or not question:
         return "", 400
 
-    sh = gc.open("Copy of A2SV - G5 Main Sheet")
+    sh = gc.open(MAIN_SHEETNAME)
 
     interaction = {
         "Column": question["Column"],
@@ -142,7 +144,7 @@ def authenticate():
             parsed_response = urlparse(f"?{response.text}")
             access_token = parse_qs(parsed_response.query)["access_token"][0].strip()
             return render_template(
-                "index.html.jinja",
+                "index.html",
                 access_token=access_token,
                 success=True,
                 message="Successfully authenticated!",
