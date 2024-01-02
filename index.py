@@ -8,14 +8,29 @@ from utils import column_to_letter
 
 from dotenv import load_dotenv
 
+from google.oauth2.service_account import Credentials
 import gspread
+
 import pymongo
+import json
 
 load_dotenv()
 
 MAIN_SHEETNAME = os.getenv("MAIN_SHEET_NAME")
 
-gc = gspread.service_account(filename=os.getenv("GOOGLE_CREDENTIALS"))
+# gc = gspread.service_account(filename=os.getenv("GOOGLE_CREDENTIALS"))
+
+
+scopes = [
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/drive",
+]
+
+credentials = Credentials.from_service_account_info(
+    json.load(os.getenv("GOOGLE_CREDENTIALS")), scopes=scopes
+)
+
+gc = gspread.authorize(credentials)
 
 git_client_id = os.getenv("GITHUB_CLIENT_ID")
 git_client_secret = os.getenv("GITHUB_CLIENT_SECRET")
