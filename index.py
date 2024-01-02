@@ -14,7 +14,7 @@ import gspread
 import pymongo
 import json
 
-load_dotenv()
+# load_dotenv()
 
 MAIN_SHEETNAME = os.getenv("MAIN_SHEET_NAME")
 
@@ -180,5 +180,10 @@ def authenticate():
         )
 
 
-if __name__ == "__main__":
-    app.run(debug=True)
+@app.route("/")
+def home():
+    return jsonify("OK")
+
+
+# if __name__ == "__main__":
+#     app.run(debug=True)
