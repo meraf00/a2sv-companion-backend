@@ -26,6 +26,25 @@ app = Flask(__name__)
 CORS(app, support_credentials=True)
 
 
+def backup(interaction):
+    # backup to google sheet b/c who knows
+
+    # TODO: Find better way to do this
+    form_url = (
+        f"https://docs.google.com/forms/d/e/1FAIpQLSdPRQ-32Wl-TaA8hWvAJR1hnGjyNYfPWSRG4hiTAVfXuWc8mQ/formResponse?"
+        + f"entry.422042046={interaction['Column']}"
+        + f"&entry.446153335={interaction['Group']}"
+        + f"&entry.1898265689={interaction['ID']}"
+        + f"&entry.1842990152={interaction['Sheet']}"
+        + f"&entry.127602={interaction['Number of Attempts']}"
+        + f"&entry.1614409012={interaction['Person']}"
+        + f"&entry.1964375111={interaction['Question_fkey']}"
+        + f"&entry.976663908={interaction['Time Spent']}"
+    )
+
+    requests.get(form_url)
+
+
 @app.route("/api", methods=["POST", "OPTIONS"])
 @cross_origin(supports_credentials=True)
 def api():
@@ -70,6 +89,11 @@ def api():
 
     # db.Interactions.insert_one(interaction)
     db.InteractionTest.insert_one(interaction)
+
+    try:
+        backup(interaction)
+    except:
+        pass
 
     # Attach to google sheet
     ws = sh.worksheet(question["Sheet"])
