@@ -82,7 +82,7 @@ def api():
 
     # Push to mongodb
     student_collection = db.People
-    question_collection = db.Question
+    question_collection = db.Questions
 
     student = student_collection.find_one({"Name": json["studentName"]})
     question = question_collection.find_one({"URL": json["questionUrl"]})
