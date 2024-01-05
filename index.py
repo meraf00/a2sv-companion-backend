@@ -181,7 +181,7 @@ def authenticate():
 
 @app.route("/")
 def home():
-    return jsonify("OK")
+    return jsonify(f"Attached to sheet '{os.getenv('MAIN_SHEET_NAME')}'")
 
 
 # if __name__ == "__main__":
