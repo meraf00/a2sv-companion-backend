@@ -7,6 +7,7 @@ from flask_cors import CORS, cross_origin
 from utils import column_to_letter
 
 from dotenv import load_dotenv
+from datetime import datetime
 
 from google.oauth2.service_account import Credentials
 import gspread
@@ -104,6 +105,7 @@ def api():
         "Person": student["Name"],
         "Question_fkey": question["ID"],
         "Time Spent": json["timeTaken"],
+        "update_timestamp": datetime.now(),
     }
 
     db.Interactions.insert_one(interaction)
