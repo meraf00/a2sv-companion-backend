@@ -82,7 +82,6 @@ def api():
 
     # Push to mongodb
     student_collection = db.People
-    # question_collection = db.QuestionTest
     question_collection = db.Question
 
     student = student_collection.find_one({"Name": json["studentName"]})
@@ -104,8 +103,7 @@ def api():
         "Time Spent": json["timeTaken"],
     }
 
-    # db.Interactions.insert_one(interaction)
-    db.InteractionTest.insert_one(interaction)
+    db.Interactions.insert_one(interaction)
 
     try:
         backup(interaction)
