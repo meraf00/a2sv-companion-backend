@@ -42,7 +42,7 @@ app = Flask(__name__)
 CORS(app, support_credentials=True)
 
 
-def backup(interaction):
+def backup(interaction, env=os.getenv("ENV")):
     # backup to google sheet b/c who knows
 
     # TODO: Find better way to do this
@@ -56,6 +56,7 @@ def backup(interaction):
         + f"&entry.1614409012={interaction['Person']}"
         + f"&entry.1964375111={interaction['Question_fkey']}"
         + f"&entry.976663908={interaction['Time Spent']}"
+        + f"&entry.588289523={env}"
     )
 
     requests.get(form_url)
