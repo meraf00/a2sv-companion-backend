@@ -20,7 +20,6 @@ MAIN_SHEETNAME = os.getenv("MAIN_SHEET_NAME")
 
 # gc = gspread.service_account(filename=os.getenv("GOOGLE_CREDENTIALS"))
 
-
 scopes = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive",
