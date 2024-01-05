@@ -75,10 +75,10 @@ def api():
         "questionUrl",
         "platform",
     ]
-    print(json)
+
     for atr in attribs:
         if atr not in json:
-            return "", 400
+            return f"{atr} not found", 400
 
     # Push to mongodb
     student_collection = db.People
@@ -87,8 +87,11 @@ def api():
     student = student_collection.find_one({"Name": json["studentName"]})
     question = question_collection.find_one({"URL": json["questionUrl"]})
 
-    if not student or not question:
-        return "", 400
+    if not student:
+        return "Student not found", 400
+
+    if not question:
+        return "Question not found", 400
 
     sh = gc.open(MAIN_SHEETNAME)
 
@@ -121,7 +124,7 @@ def api():
             studentRow = row + 1
             break
     else:
-        return "", 400
+        return "Student not found on sheet", 400
 
     questionColumn = column_to_letter(question["Column"])
     timespentColumn = column_to_letter(question["Column"] + 1)
