@@ -14,8 +14,11 @@ import gspread
 
 import pymongo
 import json
+import re
+from bson import json_util
 
 # load_dotenv()
+
 
 MAIN_SHEETNAME = os.getenv("MAIN_SHEET_NAME")
 
@@ -43,6 +46,10 @@ app = Flask(__name__)
 CORS(app, support_credentials=True)
 
 
+def parse_json(data):
+    return json.loads(json_util.dumps(data))
+
+
 def backup(interaction, env=os.getenv("ENV")):
     # backup to google sheet b/c who knows
 
@@ -61,6 +68,31 @@ def backup(interaction, env=os.getenv("ENV")):
     )
 
     requests.get(form_url)
+
+
+@app.route("/api/platform", methods=["GET", "OPTIONS"])
+@cross_origin(supports_credentials=True)
+def get_platforms():
+    platforms = db.Questions.find().distinct("Platform")
+
+    response = {"status": 200, "platforms": platforms}
+
+    return jsonify(response)
+
+
+@app.route("/api/platform/<platform>/question", methods=["GET", "OPTIONS"])
+@cross_origin(supports_credentials=True)
+def get_questions(platform):
+    questions = [
+        parse_json(question)
+        for question in db.Questions.find(
+            {"Platform": re.compile(platform, re.IGNORECASE)}
+        )
+    ]
+
+    response = {"status": 200, "questions": questions}
+
+    return jsonify(response)
 
 
 @app.route("/api", methods=["POST", "OPTIONS"])
