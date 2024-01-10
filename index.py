@@ -70,6 +70,15 @@ def backup(interaction, env=os.getenv("ENV")):
     requests.get(form_url)
 
 
+def push_to_sheet(sheetName, cellReference, gitUrl, attempts):
+    url = (
+        f"https://script.google.com/macros/s/{os.getenv('SHEET_APPSCRIPT_DEPLOYMENT')}/exec"
+        + f"?sheetName={sheetName}&cellReference={cellReference}&gitUrl={gitUrl}&attempts={attempts}"
+    )
+
+    requests.get(url)
+
+
 @app.route("/api/platform", methods=["GET", "OPTIONS"])
 @cross_origin(supports_credentials=True)
 def get_platforms():
@@ -163,10 +172,17 @@ def api():
     questionColumn = column_to_letter(question["Column"])
     timespentColumn = column_to_letter(question["Column"] + 1)
 
-    ws.update_acell(
+    push_to_sheet(
+        question["Sheet"],
         f"{questionColumn}{studentRow}",
-        f'SUBMISSION={json["gitUrl"]}={json["attempts"]}',
+        json["gitUrl"],
+        json["attempts"],
     )
+
+    # ws.update_acell(
+    #     f"{questionColumn}{studentRow}",
+    #     f'SUBMISSION={json["gitUrl"]}={json["attempts"]}',
+    # )
     # ws.format(f"{questionColumn}{studentRow}", {"horizontalAlignment": "RIGHT"})
     ws.update_acell(
         f"{timespentColumn}{studentRow}",
