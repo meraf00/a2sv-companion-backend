@@ -165,9 +165,9 @@ def api():
 
     ws.update_acell(
         f"{questionColumn}{studentRow}",
-        f'=HYPERLINK("{json["gitUrl"]}", "{json["attempts"]}")',
+        f'SUBMISSION={json["gitUrl"]}={json["attempts"]}',
     )
-    ws.format(f"{questionColumn}{studentRow}", {"horizontalAlignment": "RIGHT"})
+    # ws.format(f"{questionColumn}{studentRow}", {"horizontalAlignment": "RIGHT"})
     ws.update_acell(
         f"{timespentColumn}{studentRow}",
         json["timeTaken"],
