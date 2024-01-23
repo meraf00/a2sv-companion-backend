@@ -72,7 +72,7 @@ def backup(interaction, env=os.getenv("ENV")):
     response = requests.get(form_url)
 
     if response.status_code != 200:
-        logging.error("Failed to backup to google sheet")
+        logging.error(f"Failed to backup to google sheet: {interaction}")
 
 
 def push_to_sheet(sheetName, cellReference, gitUrl, attempts):
@@ -84,7 +84,9 @@ def push_to_sheet(sheetName, cellReference, gitUrl, attempts):
     response = requests.get(url)
 
     if response.status_code != 200:
-        logging.error("Failed to push to google sheet")
+        logging.error(
+            f"Failed to push to google sheet: {sheetName} {cellReference} {gitUrl} {attempts}"
+        )
 
 
 @app.route("/api/platform", methods=["GET", "OPTIONS"])
@@ -128,8 +130,8 @@ def api():
 
     for atr in attribs:
         if atr not in json:
-            logging.warning(f"Missing attribute: {atr}")
-            return f"{atr} not found", 400
+            logging.warning(f"Missing attribute: '{atr}'")
+            return {"status": f"{atr} not found"}, 400
 
     # Push to mongodb
     student_collection = db.People
@@ -139,11 +141,11 @@ def api():
     question = question_collection.find_one({"URL": json["questionUrl"]})
 
     if not student:
-        logging.warning(f"Student not found: {json['studentName']}")
+        logging.warning(f"Student not found: '{json['studentName']}'")
         return {"status": "Student not found on database"}, 400
 
     if not question:
-        logging.warning(f"Question not found: {json['questionUrl']}")
+        logging.warning(f"Question not found: '{json['questionUrl']}'")
         return {"status": "Question not found on database"}, 400
 
     sh = gc.open(MAIN_SHEETNAME)
@@ -165,7 +167,9 @@ def api():
     try:
         backup(interaction)
     except:
-        logging.error("Exception occured while backing up to google sheet")
+        logging.error(
+            f"Exception occured while backing up to google sheet: {interaction}"
+        )
 
     # Attach to google sheet
     ws = sh.worksheet(question["Sheet"])
@@ -178,7 +182,7 @@ def api():
             studentRow = row + 1
             break
     else:
-        logging.warning(f"Student not found on sheet: {student['Name']}")
+        logging.warning(f"Student not found on sheet: '{student['Name']}'")
         return {"status": "Student not found on sheet"}, 400
 
     questionColumn = column_to_letter(question["Column"])
