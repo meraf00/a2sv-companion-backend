@@ -2,3 +2,4 @@
 venv
 cred
 data
+__pycache__
