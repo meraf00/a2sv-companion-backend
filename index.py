@@ -17,6 +17,8 @@ import json
 import re
 from bson import json_util
 
+import logging
+
 # load_dotenv()
 
 
@@ -67,7 +69,10 @@ def backup(interaction, env=os.getenv("ENV")):
         + f"&entry.588289523={env}"
     )
 
-    requests.get(form_url)
+    response = requests.get(form_url)
+
+    if response.status_code != 200:
+        logging.error("Failed to backup to google sheet")
 
 
 def push_to_sheet(sheetName, cellReference, gitUrl, attempts):
@@ -76,7 +81,10 @@ def push_to_sheet(sheetName, cellReference, gitUrl, attempts):
         + f"?sheetName={sheetName}&cellReference={cellReference}&gitUrl={gitUrl}&attempts={attempts}"
     )
 
-    requests.get(url)
+    response = requests.get(url)
+
+    if response.status_code != 200:
+        logging.error("Failed to push to google sheet")
 
 
 @app.route("/api/platform", methods=["GET", "OPTIONS"])
@@ -120,6 +128,7 @@ def api():
 
     for atr in attribs:
         if atr not in json:
+            logging.warning(f"Missing attribute: {atr}")
             return f"{atr} not found", 400
 
     # Push to mongodb
@@ -130,10 +139,12 @@ def api():
     question = question_collection.find_one({"URL": json["questionUrl"]})
 
     if not student:
-        return "Student not found", 400
+        logging.warning(f"Student not found: {json['studentName']}")
+        return {"status": "Student not found on database"}, 400
 
     if not question:
-        return "Question not found", 400
+        logging.warning(f"Question not found: {json['questionUrl']}")
+        return {"status": "Question not found on database"}, 400
 
     sh = gc.open(MAIN_SHEETNAME)
 
@@ -154,7 +165,7 @@ def api():
     try:
         backup(interaction)
     except:
-        pass
+        logging.error("Exception occured while backing up to google sheet")
 
     # Attach to google sheet
     ws = sh.worksheet(question["Sheet"])
@@ -167,7 +178,8 @@ def api():
             studentRow = row + 1
             break
     else:
-        return "Student not found on sheet", 400
+        logging.warning(f"Student not found on sheet: {student['Name']}")
+        return {"status": "Student not found on sheet"}, 400
 
     questionColumn = column_to_letter(question["Column"])
     timespentColumn = column_to_letter(question["Column"] + 1)
@@ -179,16 +191,12 @@ def api():
         json["attempts"],
     )
 
-    # ws.update_acell(
-    #     f"{questionColumn}{studentRow}",
-    #     f'SUBMISSION={json["gitUrl"]}={json["attempts"]}',
-    # )
-    # ws.format(f"{questionColumn}{studentRow}", {"horizontalAlignment": "RIGHT"})
     ws.update_acell(
         f"{timespentColumn}{studentRow}",
         json["timeTaken"],
     )
     ws.format(f"{timespentColumn}{studentRow}", {"horizontalAlignment": "RIGHT"})
+
     return jsonify({"status": "OK"})
 
 
