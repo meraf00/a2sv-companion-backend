@@ -45,7 +45,7 @@ db = mongo_client[os.getenv("MONGODB_DB_NAME")]
 
 
 app = Flask(__name__)
-CORS(app, support_credentials=True)
+CORS(app)
 
 
 def parse_json(data):
