@@ -90,7 +90,7 @@ def push_to_sheet(sheetName, cellReference, gitUrl, attempts):
 
 
 @app.route("/api/platform", methods=["GET", "OPTIONS"])
-@cross_origin(supports_credentials=True)
+@cross_origin()
 def get_platforms():
     platforms = db.Questions.find().distinct("Platform")
 
@@ -115,7 +115,7 @@ def get_questions(platform):
 
 
 @app.route("/api", methods=["POST", "OPTIONS"])
-@cross_origin(supports_credentials=True)
+@cross_origin()
 def api():
     json = request.json
 
@@ -131,7 +131,7 @@ def api():
     for atr in attribs:
         if atr not in json:
             logging.warning(f"Missing attribute: '{atr}'")
-            return {"status": f"{atr} not found"}, 400
+            return jsonify({"status": f"{atr} not found"}, status=400)
 
     # Push to mongodb
     student_collection = db.People
@@ -141,12 +141,14 @@ def api():
     question = question_collection.find_one({"URL": json["questionUrl"]})
 
     if not student:
-        logging.warning(f"Student not found: '{json['studentName']}'")
-        return {"status": "Student not found on database"}, 400
+        logging.warning(f"Student not found on database: '{json['studentName']}'")
+        return jsonify({"status": "Please check your name."}, status=400)
 
     if not question:
-        logging.warning(f"Question not found: '{json['questionUrl']}'")
-        return {"status": "Question not found on database"}, 400
+        logging.warning(f"Question not found on database: '{json['questionUrl']}'")
+        return jsonify(
+            {"status": "This question is not found on the google sheet."}, status=400
+        )
 
     sh = gc.open(MAIN_SHEETNAME)
 
@@ -183,7 +185,7 @@ def api():
             break
     else:
         logging.warning(f"Student not found on sheet: '{student['Name']}'")
-        return {"status": "Student not found on sheet"}, 400
+        return jsonify({"status": "Can't find your name on the google sheet."}, 400)
 
     questionColumn = column_to_letter(question["Column"])
     timespentColumn = column_to_letter(question["Column"] + 1)
