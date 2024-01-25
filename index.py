@@ -128,12 +128,12 @@ def api():
         "platform",
     ]
 
-    logging.info(f"Here 1")
+    logging.warning(f"Here 1")
 
     for atr in attribs:
         if atr not in json:
             logging.warning(f"Missing attribute: '{atr}'")
-            return jsonify({"status": f"{atr} not found"}, status=400)
+            return jsonify({"status": f"{atr} not found"}), 400
 
     # Push to mongodb
     student_collection = db.People
@@ -144,15 +144,16 @@ def api():
 
     if not student:
         logging.warning(f"Student not found on database: '{json['studentName']}'")
-        return jsonify({"status": "Please check your name."}, status=400)
+        return jsonify({"status": "Please check your name."}), 400
 
     if not question:
         logging.warning(f"Question not found on database: '{json['questionUrl']}'")
-        return jsonify(
-            {"status": "This question is not found on the google sheet."}, status=400
+        return (
+            jsonify({"status": "This question is not found on the google sheet."}),
+            400,
         )
 
-    logging.info(f"Here 2")
+    logging.warning(f"Here 2")
     sh = gc.open(MAIN_SHEETNAME)
 
     interaction = {
@@ -169,17 +170,17 @@ def api():
 
     db.Interactions.insert_one(interaction)
 
-    logging.info(f"Here 3")
+    logging.warning(f"Here 3")
 
     try:
         backup(interaction)
-        logging.info(f"Here 4")
+        logging.warning(f"Here 4")
     except:
         logging.error(
             f"Exception occured while backing up to google sheet: {interaction}"
         )
 
-    logging.info(f"Here 5")
+    logging.warning(f"Here 5")
     # Attach to google sheet
     ws = sh.worksheet(question["Sheet"])
 
@@ -192,9 +193,9 @@ def api():
             break
     else:
         logging.warning(f"Student not found on sheet: '{student['Name']}'")
-        return jsonify({"status": "Can't find your name on the google sheet."}, 400)
+        return jsonify({"status": "Can't find your name on the google sheet."}), 400
 
-    logging.info(f"Here 6")
+    logging.warning(f"Here 6")
     questionColumn = column_to_letter(question["Column"])
     timespentColumn = column_to_letter(question["Column"] + 1)
 
@@ -205,7 +206,7 @@ def api():
         json["attempts"],
     )
 
-    logging.info(f"Here 8")
+    logging.warning(f"Here 8")
 
     ws.update_acell(
         f"{timespentColumn}{studentRow}",
@@ -213,7 +214,7 @@ def api():
     )
     ws.format(f"{timespentColumn}{studentRow}", {"horizontalAlignment": "RIGHT"})
 
-    logging.info(f"Here 9")
+    logging.warning(f"Here 9")
 
     return jsonify({"status": "OK"})
 
