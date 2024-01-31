@@ -128,7 +128,7 @@ def api():
         "platform",
     ]
 
-    logging.debug(f"Attemping to push: {json}")
+    logging.warning(f"Attemping to push: {json}")
 
     for atr in attribs:
         if atr not in json:
@@ -153,7 +153,7 @@ def api():
             400,
         )
 
-    logging.debug(f"Opening main sheet")
+    logging.warning(f"Opening main sheet")
     sh = gc.open(MAIN_SHEETNAME)
 
     interaction = {
@@ -170,7 +170,7 @@ def api():
 
     db.Interactions.insert_one(interaction)
 
-    logging.debug(f"Searching for student on main sheet")
+    logging.warning(f"Searching for student on main sheet")
 
     # Attach to google sheet
     ws = sh.worksheet(question["Sheet"])
@@ -186,11 +186,10 @@ def api():
         logging.warning(f"Student not found on sheet: '{student['Name']}'")
         return jsonify({"status": "Can't find your name on the google sheet."}), 400
 
-    logging.warning(f"Here 6")
     questionColumn = column_to_letter(question["Column"])
     timespentColumn = column_to_letter(question["Column"] + 1)
 
-    logging.debug(f"Pushing git url to sheet")
+    logging.warning(f"Pushing git url to sheet")
 
     push_to_sheet(
         question["Sheet"],
@@ -199,7 +198,7 @@ def api():
         json["attempts"],
     )
 
-    logging.debug(f"Pushing time taken to sheet")
+    logging.warning(f"Pushing time taken to sheet")
 
     ws.update_acell(
         f"{timespentColumn}{studentRow}",
@@ -207,7 +206,7 @@ def api():
     )
     ws.format(f"{timespentColumn}{studentRow}", {"horizontalAlignment": "RIGHT"})
 
-    logging.debug(f"Successfully pushed to sheet")
+    logging.warning(f"Successfully pushed to sheet")
 
     return jsonify({"status": "OK"})
 
