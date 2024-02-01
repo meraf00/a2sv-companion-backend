@@ -163,7 +163,7 @@ def api():
         "Sheet": question["Sheet"],
         "Number of Attempts": json["attempts"],
         "Person": student["Name"],
-        "Question_fkey": question["ID"],
+        "Question_fkey": f"{question['Column']} | 50",
         "Time Spent": json["timeTaken"],
         "update_timestamp": datetime.now(),
     }
