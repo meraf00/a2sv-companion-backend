@@ -75,17 +75,17 @@ def backup(interaction, env=os.getenv("ENV")):
         logging.error(f"Failed to backup to google sheet: {interaction}")
 
 
-def push_to_sheet(sheetName, cellReference, gitUrl, attempts):
+def push_to_sheet(studentName, sheetName, questionColumn, gitUrl, attempts, timeTaken):
     url = (
         f"https://script.google.com/macros/s/{os.getenv('SHEET_APPSCRIPT_DEPLOYMENT')}/exec"
-        + f"?sheetName={sheetName}&cellReference={cellReference}&gitUrl={gitUrl}&attempts={attempts}"
+        + f"?studentName={studentName}&sheetName={sheetName}&questionColumn={questionColumn}&gitUrl={gitUrl}&attempts={attempts}&timeTaken={timeTaken}"
     )
 
     response = requests.get(url)
 
     if response.status_code != 200:
         logging.error(
-            f"Failed to push to google sheet: {sheetName} {cellReference} {gitUrl} {attempts}"
+            f"Failed to push to google sheet: {sheetName} {questionColumn} {gitUrl} {attempts}"
         )
 
 
@@ -153,9 +153,6 @@ def api():
             400,
         )
 
-    logging.warning(f"Opening main sheet")
-    sh = gc.open(MAIN_SHEETNAME)
-
     interaction = {
         "Column": question["Column"],
         "Group": student["Group"],
@@ -170,41 +167,16 @@ def api():
 
     db.Interactions.insert_one(interaction)
 
-    logging.warning(f"Searching for student on main sheet")
-
-    # Attach to google sheet
-    ws = sh.worksheet(question["Sheet"])
-
-    studentNames = ws.col_values(1)
-
-    studentRow = None
-    for row, name in enumerate(studentNames):
-        if name == student["Name"]:
-            studentRow = row + 1
-            break
-    else:
-        logging.warning(f"Student not found on sheet: '{student['Name']}'")
-        return jsonify({"status": "Can't find your name on the google sheet."}), 400
-
-    questionColumn = column_to_letter(question["Column"])
-    timespentColumn = column_to_letter(question["Column"] + 1)
-
-    logging.warning(f"Pushing git url to sheet")
+    logging.warning(f"Pushing to sheet")
 
     push_to_sheet(
-        question["Sheet"],
-        f"{questionColumn}{studentRow}",
-        json["gitUrl"],
-        json["attempts"],
+        studentName=json["studentName"],
+        sheetName=question["Sheet"],
+        questionColumn=question["Column"],
+        gitUrl=json["gitUrl"],
+        attempts=json["attempts"],
+        timeTaken=json["timeTaken"],
     )
-
-    logging.warning(f"Pushing time taken to sheet")
-
-    ws.update_acell(
-        f"{timespentColumn}{studentRow}",
-        json["timeTaken"],
-    )
-    ws.format(f"{timespentColumn}{studentRow}", {"horizontalAlignment": "RIGHT"})
 
     logging.warning(f"Successfully pushed to sheet")
 
